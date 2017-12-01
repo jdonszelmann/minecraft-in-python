@@ -10,12 +10,8 @@ class Window(pyglet.window.Window):
 		self.fps_display = pyglet.clock.ClockDisplay()
 		self.draw_fps = False
 
-		glEnable(GL_TEXTURE_2D)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
 		self.set_exclusive_mouse(True)		
-		glShadeModel(GL_SMOOTH)
+		# glShadeModel(GL_SMOOTH)
 		glEnable(GL_DEPTH_TEST) 
 		glMatrixMode(GL_MODELVIEW)
 		glClearColor(0.5,0.7,1.0,1.0)
@@ -42,11 +38,20 @@ class Window(pyglet.window.Window):
 		self.camera = Camera(70)
 		self.c = []
 
-		for x in range(0,5):
-			for y in range(0,5):
+		tt = 0
+
+		b = time.time()
+		for x in range(0,10):
+			for y in range(0,10):
+				d = time.time()
 				a = chunk(x,y)
 				a.generate_mesh()
-				self.c.append(a)		
+				self.c.append(a)
+				print("chunk time: ", time.time()-d)
+				tt += time.time()-d
+		print("total time: ", time.time()-b)
+		print("total time should be: ", tt)
+		
 
 	def cls(self):
 		self.clear()
@@ -81,6 +86,10 @@ class Window(pyglet.window.Window):
 
 
 		glPushMatrix()
+
+		glEnable(GL_TEXTURE_2D)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
 		# glRotatef(self.xRotation, 1, 0, 0)
 		# glRotatef(self.yRotation, 0, 1, 0)

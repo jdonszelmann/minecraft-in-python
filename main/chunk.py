@@ -2,6 +2,7 @@ import numpy, pyglet, os, time
 from .util import *
 from . import noise
 from .shader import Shader
+from pyglet.gl import *
 path = os.path.dirname(os.path.abspath(__file__))
 seed = 5
 
@@ -34,7 +35,7 @@ class chunk:
 			for z in range(self.blocks.shape[2]):
 				x_t = x + self.x*(self.width) - self.x*2
 				z_t = z - self.z*(self.depth) + self.z*2
-				rand = (elevation.noise2d(x_t*0.001,z_t*0.001) + (roughness.noise2d(x_t*0.005,z_t*0.005)*detail.noise2d(x_t*0.1,z_t*0.1)))*64+64
+				rand = (elevation.noise2d(x_t*0.0005,z_t*0.0005) + (roughness.noise2d(x_t*0.005,z_t*0.005)*detail.noise2d(x_t*0.1,z_t*0.1)))*64+64
 				# rand = elevation.noise2d(x_t*0.01,z_t*0.01)*64+64
 				a = numpy.zeros((255))
 				a[0:int(rand)] = 1
@@ -99,7 +100,6 @@ class chunk:
 								('v3f',vertices),
 								('c3f', shade_data),
 								('t2f',coords),
-								# ('c3B',colors)
 							)				
 				lastsolid = thissolid
 
@@ -110,12 +110,6 @@ class texture(pyglet.graphics.TextureGroup):
 			texturedb.update({number:pyglet.image.load(texturepaths[number]).get_texture()})
 		
 		super().__init__(texturedb[number])
-
-
-
-
-
-
 
 
 
