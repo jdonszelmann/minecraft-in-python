@@ -22,20 +22,19 @@ class chunk:
 	def __init__(self,x,z):
 		self.x = x
 		self.z = z
-		self.init_shader()
-		self.batch = pyglet.graphics.Batch()
 		self.width = 16
 		self.height = 255
 		self.depth = 16
 		self.blocks = numpy.zeros((self.width+2,self.height,self.depth+2))
-		self.faces = numpy.zeros((self.width,self.height,self.depth))
+		self.faces = {}
+		self.shader_initialized = False
 
 	def generate_heightmap(self):
-		for x in range(self.blocks.shape[0]):
-			for z in range(self.blocks.shape[2]):
+		for x in range(0,self.blocks.shape[0],1):
+			for z in range(0,self.blocks.shape[2],1):
 				x_t = x + self.x*(self.width) - self.x*2
 				z_t = z - self.z*(self.depth) + self.z*2
-				rand = (elevation.noise2d(x_t*0.0005,z_t*0.0005) + (roughness.noise2d(x_t*0.005,z_t*0.005)*detail.noise2d(x_t*0.1,z_t*0.1)))*64+64
+				rand = (elevation.noise2d(x_t*0.0001,z_t*0.0001) + (roughness.noise2d(x_t*0.005,z_t*0.005)*detail.noise2d(x_t*0.1,z_t*0.1)))*64+64
 				# rand = elevation.noise2d(x_t*0.01,z_t*0.01)*64+64
 				a = numpy.zeros((255))
 				a[0:int(rand)] = 1
@@ -43,6 +42,7 @@ class chunk:
 				self.blocks[x,:,z] = a
 
 	def init_shader(self):
+		self.shader_initialized = True
 		vertex_shader = ""
 		fragment_shader = ""
 
@@ -86,22 +86,32 @@ class chunk:
 							thissolid = False
 
 						if self.blocks[x,y,z] != 0 and face != 0 and x > 1 and x < self.blocks.shape[0]-2 and z > 1 and z < self.blocks.shape[2]-2:
-							vertices = cube_vertices(x+(self.x * self.width)-self.x*2, y, z-(self.z * self.depth)+self.z*2, 0.5,face)
-							vertice_num = int(len(vertices)/3)
-							shade_data = cube_shade(1, 1, 1, 1, face)
-							coords = 	[	0.0,0.0,
-											1.0,0.0, 
-											1.0,1.0,
-											0.0,1.0
-										]*int(vertice_num/4)
-							colors = [255,0,0]*vertice_num
-							t = texture(self.blocks[x,y,z])
-							self.batch.add(vertice_num, pyglet.gl.GL_QUADS,t,
-								('v3f',vertices),
-								('c3f', shade_data),
-								('t2f',coords),
-							)				
+							self.faces[(x,y,z)] = face
 				lastsolid = thissolid
+	
+	def make_mesh(self):
+		if not hasattr(self,"batch"):
+			self.batch = pyglet.graphics.Batch()
+		if not self.shader_initialized:
+			self.init_shader()
+		for key,item in self.faces.items():
+			face = item
+			x,y,z = key
+			vertices = cube_vertices(x+(self.x * self.width)-self.x*2, y, z-(self.z * self.depth)+self.z*2, 0.5,face)
+			vertice_num = int(len(vertices)/3)
+			shade_data = cube_shade(1, 1, 1, 1, face)
+			coords = 	[	0.0,0.0,
+							1.0,0.0, 
+							1.0,1.0,
+							0.0,1.0
+						]*int(vertice_num/4)
+			colors = [255,0,0]*vertice_num
+			t = texture(self.blocks[x,y,z])
+			self.batch.add(vertice_num, pyglet.gl.GL_QUADS,t,
+				('v3f',vertices),
+				('c3f', shade_data),
+				('t2f',coords),
+			)	
 
 class texture(pyglet.graphics.TextureGroup):
 	def __init__(self, number):
